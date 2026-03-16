@@ -1,5 +1,8 @@
 # UCTP Buttonless Demo (Java + Maven + Spring Boot)
 
+
+
+
 Demo app for a “buttonless” Unified Click to Pay (UCTP) flow:
 - UI page: `/uctp-buttonless`
 - Backend endpoint: `POST /api/sessions` (server-to-server call to CyberSource Sessions API)
@@ -67,3 +70,43 @@ If you enabled the UI debug call to `POST /api/debug/decrypt-jwe`, you must prov
 - If CyberSource rejects sessions with an origin error, double-check you’re running the UI at an HTTPS origin (for local: `https://localhost:8443`).
 - `/sessions` response schema can differ by tenant; adjust parsing in `SessionsService` if your JWT field names differ.
 - In production, validate JWT signatures and tighten origin allow-lists.
+
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as App (UI)
+    participant Backend as Merchant Backend
+    participant Cybs as CyberSource API
+    participant SDK as UCTP SDK
+
+    Note over User, SDK: --- Session & Initialization ---
+    User->>UI: Clicks "Crear sesión"
+    UI->>UI: buildSessionsPayloadFromCart()
+    UI->>Backend: POST /api/sessions (Cart total, allowed networks)
+    
+    Backend->>Cybs: POST https://apitest.cybersource.com/uctp/v1/sessions
+    Cybs-->>Backend: { clientLibrary, captureContextJwt, integrity }
+    Backend-->>UI: { clientLibrary, captureContextJwt, integrity }
+    
+    UI->>UI: decodeJwtPayload(jwt) & extract panEncryptionKeys
+    UI->>SDK: Load script (src=clientLibrary)
+    UI->>SDK: sdk.initialize({ raw: jwt, payload: parsedJwt }, { dpaTransactionOptions: {...} })
+    SDK-->>UI: Promise resolved
+    
+    Note over User, SDK: --- Get Cards (Consumer Lookup) ---
+    User->>UI: Clicks "Get Cards" (Provides Email)
+    UI->>SDK: sdk.getCards({ consumerIdentity: { identityValue: email, ... } })
+    SDK-->>UI: { actionCode: "SUCCESS", profiles: [ { maskedCards: [...] } ] }
+    UI->>UI: processCards() maps profiles to state
+    UI->>User: showSavedCardsPanel(true)
+    
+    Note over User, SDK: --- Checkout ---
+    User->>UI: Selects a saved card & clicks "Pagar"
+    UI->>SDK: sdk.checkout({ srcDigitalCardId, dpaTransactionOptions: {...}, payloadTypeIndicatorCheckout: "FULL" })
+    SDK-->>UI: { actionCode: "SUCCESS", encryptedPayload: "[JWE]" } 
+    
+    UI->>Backend: POST /api/debug/decrypt-jwe { jwe }
+    Backend-->>UI: Decrypted Payment Data
+    UI->>User: showPaymentSuccessPanel(true)
+```
