@@ -1,0 +1,13 @@
+target/
+*.class
+.settings/
+.project
+.classpath
+.factorypath
+.vscode/
+
+# Local HTTPS (self-signed) keystore (do not commit)
+local-keystore.p12
+
+# Local private keys (do not commit)
+private.pem
