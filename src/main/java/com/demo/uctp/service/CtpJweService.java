@@ -72,7 +72,17 @@ public class CtpJweService {
         if (privateKeyPemBase64 != null && !privateKeyPemBase64.isBlank()) {
             log.info("Using MLE private key source: pemBase64");
             try {
-                byte[] decoded = Base64.getDecoder().decode(privateKeyPemBase64.trim());
+                String raw = privateKeyPemBase64.trim();
+                if (raw.contains("BEGIN PRIVATE KEY") || raw.contains("BEGIN RSA PRIVATE KEY")) {
+                    throw new IllegalStateException(
+                        "ctp.mle.private-key-pem-base64 parece contener PEM en texto plano. " +
+                        "Usa ctp.mle.private-key-pem (CTP_MLE_PRIVATE_KEY_PEM) o pega un Base64 real."
+                    );
+                }
+
+                // Railway UIs / copy-paste sometimes introduce whitespace/newlines; ignore them.
+                String compact = raw.replaceAll("\\s+", "");
+                byte[] decoded = Base64.getMimeDecoder().decode(compact);
                 String pem = new String(decoded, StandardCharsets.UTF_8);
                 return PemKeyLoaderUtil.loadPrivateKeyFromPemString(pem);
             } catch (Exception e) {

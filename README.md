@@ -73,6 +73,7 @@ If you enabled the UI debug call to `POST /api/debug/decrypt-jwe`, you must prov
 - Make sure the variable name is exactly `CTP_MLE_PRIVATE_KEY_PEM_BASE64` (uppercase + underscores).
 - After setting/updating a variable, trigger a new deploy/restart so the running container picks it up.
 - On startup, the app logs: `[CtpJweService] MLE private key configured? ...` (it prints booleans only, never the key).
+- The Base64 value should be a single line; if Railway introduces whitespace/newlines, the app ignores them.
 
 ### Alternative: `SPRING_APPLICATION_JSON`
 If you prefer setting Spring properties as JSON, you can set an env var like:
