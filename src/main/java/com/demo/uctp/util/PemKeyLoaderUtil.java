@@ -3,6 +3,7 @@ package com.demo.uctp.util;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.FileReader;
 import java.io.StringReader;
@@ -10,8 +11,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.Security;
 
 public class PemKeyLoaderUtil {
+
+	static {
+		// In some environments (containers), "BC" is not registered by default.
+		if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+			Security.addProvider(new BouncyCastleProvider());
+		}
+	}
 
 	/* String normalized = pem
                 .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -57,7 +66,7 @@ public class PemKeyLoaderUtil {
 		try {
 			Object object = pemParser.readObject();
 
-			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+			JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME);
 
 			PrivateKey privateKey;
 

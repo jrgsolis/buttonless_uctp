@@ -40,16 +40,27 @@ public class CtpDebugController {
             ));
 
         } catch (Exception e) {
-        	e.printStackTrace();
-        	
+	        	e.printStackTrace();
+
+	            String cause = null;
+	            Throwable t = e;
+	            // walk down a few levels for the most useful root message
+	            for (int i = 0; i < 6 && t != null; i++) {
+	                if (t.getCause() == null) break;
+	                t = t.getCause();
+	            }
+	            if (t != null && t != e) {
+	                cause = t.getMessage();
+	            } else if (e.getCause() != null) {
+	                cause = e.getCause().getMessage();
+	            }
+	        	
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "error", e.getMessage(),
                 "exception",
                 e.getClass().getName(),
-                "cause", e.getCause() != null ?
-                String.valueOf(e.getCause().getMessage())
-                : "null"
+                "cause", cause != null ? String.valueOf(cause) : "null"
                 
             ));
         }

@@ -70,6 +70,7 @@ public class CtpJweService {
 
     private RSAPrivateKey resolvePrivateKey() {
         if (privateKeyPemBase64 != null && !privateKeyPemBase64.isBlank()) {
+            log.info("Using MLE private key source: pemBase64");
             try {
                 byte[] decoded = Base64.getDecoder().decode(privateKeyPemBase64.trim());
                 String pem = new String(decoded, StandardCharsets.UTF_8);
@@ -80,10 +81,12 @@ public class CtpJweService {
         }
 
         if (privateKeyPem != null && !privateKeyPem.isBlank()) {
+            log.info("Using MLE private key source: pem");
             return PemKeyLoaderUtil.loadPrivateKeyFromPemString(privateKeyPem);
         }
 
         if (privateKeyPath != null && !privateKeyPath.isBlank()) {
+            log.info("Using MLE private key source: path");
             return PemKeyLoaderUtil.loadPrivateKey(privateKeyPath);
         }
 
