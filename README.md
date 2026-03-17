@@ -69,6 +69,15 @@ If you enabled the UI debug call to `POST /api/debug/decrypt-jwe`, you must prov
   - (Alternative) `CTP_MLE_PRIVATE_KEY_PEM` → maps to `ctp.mle.private-key-pem` (supports literal `\\n`)
 - Don’t commit key material (see `.gitignore`).
 
+### Railway checklist
+- Make sure the variable name is exactly `CTP_MLE_PRIVATE_KEY_PEM_BASE64` (uppercase + underscores).
+- After setting/updating a variable, trigger a new deploy/restart so the running container picks it up.
+- On startup, the app logs: `[CtpJweService] MLE private key configured? ...` (it prints booleans only, never the key).
+
+### Alternative: `SPRING_APPLICATION_JSON`
+If you prefer setting Spring properties as JSON, you can set an env var like:
+- `SPRING_APPLICATION_JSON={"ctp":{"mle":{"private-key-pem-base64":"<BASE64_PEM>"}}}`
+
 ## Notes / Troubleshooting
 - If CyberSource rejects sessions with an origin error, double-check you’re running the UI at an HTTPS origin (for local: `https://localhost:8443`).
 - `/sessions` response schema can differ by tenant; adjust parsing in `SessionsService` if your JWT field names differ.

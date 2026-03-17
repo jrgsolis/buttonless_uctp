@@ -3,6 +3,9 @@ package com.demo.uctp.service;
 import com.demo.uctp.util.PemKeyLoaderUtil;
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.RSADecrypter;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +15,8 @@ import java.security.interfaces.RSAPrivateKey;
 
 @Service
 public class CtpJweService {
+
+    private static final Logger log = LoggerFactory.getLogger(CtpJweService.class);
 
     private final String privateKeyPath;
     private final String privateKeyPem;
@@ -25,6 +30,14 @@ public class CtpJweService {
         this.privateKeyPath = privateKeyPath;
         this.privateKeyPem = privateKeyPem;
         this.privateKeyPemBase64 = privateKeyPemBase64;
+    }
+
+    @PostConstruct
+    public void logConfig() {
+        boolean hasPemB64 = privateKeyPemBase64 != null && !privateKeyPemBase64.isBlank();
+        boolean hasPem = privateKeyPem != null && !privateKeyPem.isBlank();
+        boolean hasPath = privateKeyPath != null && !privateKeyPath.isBlank();
+        log.info("MLE private key configured? pemBase64={} pem={} path={}", hasPemB64, hasPem, hasPath);
     }
 
     public String decryptJwe(String jwe) throws Exception {
