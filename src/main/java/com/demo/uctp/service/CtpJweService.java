@@ -6,28 +6,31 @@ import com.nimbusds.jose.crypto.RSADecrypter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.security.interfaces.RSAPrivateKey;
 
 @Service
 public class CtpJweService {
 
     private final String privateKeyPath;
+    private final String privateKeyPem;
+    private final String privateKeyPemBase64;
 
-    public CtpJweService(@Value("${ctp.mle.private-key-path:}") String privateKeyPath) {
+    public CtpJweService(
+        @Value("${ctp.mle.private-key-path:}") String privateKeyPath,
+        @Value("${ctp.mle.private-key-pem:}") String privateKeyPem,
+        @Value("${ctp.mle.private-key-pem-base64:}") String privateKeyPemBase64
+    ) {
         this.privateKeyPath = privateKeyPath;
+        this.privateKeyPem = privateKeyPem;
+        this.privateKeyPemBase64 = privateKeyPemBase64;
     }
 
     public String decryptJwe(String jwe) throws Exception {
 
 	    try {	
-	        if (privateKeyPath == null || privateKeyPath.isBlank()) {
-	            throw new IllegalStateException(
-	                "No se configuró ctp.mle.private-key-path (ruta al PEM PKCS#8)."
-	            );
-	        }
-
-	        RSAPrivateKey privateKey =
-	                PemKeyLoaderUtil.loadPrivateKey(privateKeyPath);
+	        RSAPrivateKey privateKey = resolvePrivateKey();
 
        /* JWEObject jweObject = JWEObject.parse(jwe);
 
@@ -51,5 +54,30 @@ public class CtpJweService {
 	     }
 	    
 	    }
+
+    private RSAPrivateKey resolvePrivateKey() {
+        if (privateKeyPemBase64 != null && !privateKeyPemBase64.isBlank()) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(privateKeyPemBase64.trim());
+                String pem = new String(decoded, StandardCharsets.UTF_8);
+                return PemKeyLoaderUtil.loadPrivateKeyFromPemString(pem);
+            } catch (Exception e) {
+                throw new IllegalStateException("No fue posible decodificar ctp.mle.private-key-pem-base64.", e);
+            }
+        }
+
+        if (privateKeyPem != null && !privateKeyPem.isBlank()) {
+            return PemKeyLoaderUtil.loadPrivateKeyFromPemString(privateKeyPem);
+        }
+
+        if (privateKeyPath != null && !privateKeyPath.isBlank()) {
+            return PemKeyLoaderUtil.loadPrivateKey(privateKeyPath);
+        }
+
+        throw new IllegalStateException(
+            "Configura una llave privada MLE (PEM PKCS#8) via ctp.mle.private-key-path, " +
+            "ctp.mle.private-key-pem, o ctp.mle.private-key-pem-base64."
+        );
+    }
 
 }

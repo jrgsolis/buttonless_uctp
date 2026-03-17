@@ -63,8 +63,11 @@ Your browser will warn because the cert is self-signed; proceed for local testin
 
 ## Debug: Decrypt JWE (MLE)
 If you enabled the UI debug call to `POST /api/debug/decrypt-jwe`, you must provide your MLE private key:
-- Set `ctp.mle.private-key-path` (PEM PKCS#8) in `src/main/resources/application.properties` (or via env/config).
-- Don’t commit the key file (see `.gitignore`).
+- Recommended for local dev: set `ctp.mle.private-key-path` (PEM PKCS#8) to a real file path on your machine.
+- Recommended for Railway/containers: set the PEM via env var (no file needed):
+  - `CTP_MLE_PRIVATE_KEY_PEM_BASE64` → maps to `ctp.mle.private-key-pem-base64`
+  - (Alternative) `CTP_MLE_PRIVATE_KEY_PEM` → maps to `ctp.mle.private-key-pem` (supports literal `\\n`)
+- Don’t commit key material (see `.gitignore`).
 
 ## Notes / Troubleshooting
 - If CyberSource rejects sessions with an origin error, double-check you’re running the UI at an HTTPS origin (for local: `https://localhost:8443`).
